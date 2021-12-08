@@ -101,7 +101,7 @@ public class EnvironnementFX extends Application {
 
                 tile.setStroke(Color.BLACK);
                 if (map[i][j] instanceof Agent) {
-                    tile.setFill(Color.RED);
+                    tile.setFill(Color.GREEN);
                     Text text = new Text();
                     text.setFont(Font.font(40));
                     gameBoardFinal.add(new StackPane(tile, text), j, i);
@@ -134,7 +134,7 @@ public class EnvironnementFX extends Application {
 
             while (!this.environnement.isFinished()) {
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                 } catch (InterruptedException ex) {
                 }
 
