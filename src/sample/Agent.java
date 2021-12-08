@@ -14,11 +14,6 @@ public class Agent extends Thread {
     }
 
     public void run() {
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         while (!this.environnement.isFinished()) {
             if (!this.messageReceived.isEmpty()) {
                 String coordDep = messageReceived.pollFirst();

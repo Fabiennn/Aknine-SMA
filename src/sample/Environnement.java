@@ -9,9 +9,11 @@ public class Environnement {
     private Object[][] grille;
     private HashMap<Agent, int[]> tabAgents = new HashMap<>();
     private HashMap<Integer, ArrayList<Integer>> tabFinal = new HashMap<>();
+    private Object[][] grilleFinal;
 
     public Environnement(int nbLignes, int nbColonnes, int nbAgent) {
         this.grille = new Object[nbLignes][nbColonnes];
+        this.grilleFinal = new Object[nbLignes][nbColonnes];
         Random rand = new Random();
         int nAleatoire = rand.nextInt(nbLignes);
         int mAleatoire = rand.nextInt(nbColonnes);
@@ -58,6 +60,10 @@ public class Environnement {
                 tabFinal.put(nAleatoireFinal, m);
             }
             agent.setPositionFinale(nAleatoireFinal, mAleatoireFinal);
+        }
+
+        for (Agent agent : this.agents) {
+            this.grilleFinal[agent.getPositionFinale()[0]][agent.getPositionFinale()[1]] = agent;
         }
     }
 
@@ -112,5 +118,9 @@ public class Environnement {
 
     public void setTabFinal(HashMap<Integer, ArrayList<Integer>> tabFinal) {
         this.tabFinal = tabFinal;
+    }
+
+    public Object[][] getGrilleFinal() {
+        return this.grilleFinal;
     }
 }
