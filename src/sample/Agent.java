@@ -7,11 +7,9 @@ import java.util.Random;
 public class Agent extends Thread {
     private Environnement environnement;
     private String nom;
-    private int[] position = new int[2];
-    private int[] positionFinale = new int[2];
+    private final int[] position = new int[2];
+    private final int[] positionFinale = new int[2];
     private ArrayDeque<String> messageReceived = new ArrayDeque<>();
-    private ArrayList<Integer> memoire = new ArrayList<>();
-    private int iteration = 0;
 
     public Agent(String nom) {
         this.nom = nom;
@@ -23,7 +21,6 @@ public class Agent extends Thread {
                 String coordDep = messageReceived.pollFirst();
                 this.deplacementForce(coordDep);
             } else this.deplacement();
-            this.iteration++;
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
@@ -44,29 +41,35 @@ public class Agent extends Thread {
                 '}';
     }
 
+    public synchronized void deplacer(String dep, int nextPosition) {
+        switch (dep) {
+            case "x":
+                this.environnement.getGrille()[nextPosition][this.position[1]] = this;
+                this.environnement.getGrille()[this.position[0]][this.position[1]] = null;
+                this.position[0] = nextPosition;
+                break;
+            case "y":
+                this.environnement.getGrille()[this.position[0]][nextPosition] = this;
+                this.environnement.getGrille()[this.position[0]][this.position[1]] = null;
+                this.position[1] = nextPosition;
+        }
+    }
+
     public synchronized void deplacement() {
         int nextPositionX = this.position[0];
         int nextPositionY = this.position[1];
-        int deplacement = -1;
-        if (this.memoire.size() > 20) {
-            this.afficherMemoire();
-        }
+
         // POSITION X
         if (this.position[0] != this.positionFinale[0]) {
             // recupere s'il doit monter ou descendre
             if (this.position[0] < positionFinale[0]) {
                 nextPositionX = this.position[0] + 1;
-                deplacement = 0;
             } else if (this.position[0] > positionFinale[0]) {
                 nextPositionX = this.position[0] - 1;
-                deplacement = 2;
             }
             // regarde s'il peut se déplacer, ou s'il doit pousser
             if (this.environnement.getGrille()[nextPositionX][this.position[1]] == null) { // se deplace
-                this.environnement.getGrille()[nextPositionX][this.position[1]] = this;
-                this.environnement.getGrille()[this.position[0]][this.position[1]] = null;
-                this.position[0] = nextPositionX;
-                memoire.add(deplacement);
+                this.deplacer("x", nextPositionX);
             } else { // pousse
                 Agent agent = (Agent) this.environnement.getGrille()[nextPositionX][this.position[1]];
                 agent.getMessageReceived().addLast("x");
@@ -75,18 +78,13 @@ public class Agent extends Thread {
             // recupere s'il doit monter ou descendre
             if (this.position[1] < positionFinale[1]) {
                 nextPositionY = this.position[1] + 1;
-                deplacement = 1;
             } else if (this.position[1] > positionFinale[1]) {
                 nextPositionY = this.position[1] - 1;
-                deplacement = 3;
             }
             // regarde s'il peut se déplacer, ou s'il doit pousser
             if (this.environnement.getGrille()[this.position[0]][nextPositionY] == null) {
                 //Se deplace
-                this.environnement.getGrille()[this.position[0]][nextPositionY] = this;
-                this.environnement.getGrille()[this.position[0]][this.position[1]] = null;
-                this.position[1] = nextPositionY;
-                memoire.add(deplacement);
+                this.deplacer("y", nextPositionY);
             } else {
                 Agent agent = (Agent) this.environnement.getGrille()[this.position[0]][nextPositionY];
                 agent.getMessageReceived().addLast("y");
@@ -94,39 +92,26 @@ public class Agent extends Thread {
         }
     }
 
-    public void afficherMemoire() {
-        for (int i = memoire.size() - 1; i > memoire.size() - 6; i--) {
-            System.out.println(memoire.get(i));
-        }
-    }
-
     public synchronized void deplacementForce(String dep) {
         int nextPositionX = this.position[0];
         int nextPositionY = this.position[1];
         Random rand = new Random();
-        int deplacement = -1;
         switch (dep) {
             case "y":
                 int aleatoireX = rand.nextInt(2);
-
                 switch (aleatoireX) {
                     case 0:
-                        deplacement = 0;
                         if (this.position[0] - 1 >= 0)
                             nextPositionX = this.position[0] - 1;
                         break;
                     case 1:
-                        deplacement = 2;
                         if (this.position[0] + 1 <= this.environnement.getGrille().length - 1)
                             nextPositionX = this.position[0] + 1;
                         break;
                 }
 
                 if (nextPositionX != this.position[0] && this.environnement.getGrille()[nextPositionX][this.position[1]] == null) {
-                    this.environnement.getGrille()[nextPositionX][this.position[1]] = this;
-                    this.environnement.getGrille()[this.position[0]][this.position[1]] = null;
-                    this.position[0] = nextPositionX;
-                    memoire.add(deplacement);
+                    this.deplacer("x", nextPositionX);
                 } else {
                     Agent agent = (Agent) this.environnement.getGrille()[nextPositionX][this.position[1]];
                     agent.getMessageReceived().addLast("x");
@@ -134,27 +119,19 @@ public class Agent extends Thread {
                 break;
             case "x":
                 int aleatoireY = rand.nextInt(2);
-
-
                 switch (aleatoireY) {
                     case 0:
-                        deplacement = 3;
-                        if (this.position[1] - 1 > 0)
+                        if (this.position[1] - 1 >= 0)
                             nextPositionY = this.position[1] - 1;
                         break;
                     case 1:
-                        deplacement = 1;
                         if (this.position[1] + 1 < this.environnement.getGrille()[0].length)
                             nextPositionY = this.position[1] + 1;
                         break;
                 }
-
                 if (nextPositionY != this.position[1] && this.environnement.getGrille()[this.position[0]][nextPositionY] == null) {
                     //Se deplace
-                    this.environnement.getGrille()[this.position[0]][nextPositionY] = this;
-                    this.environnement.getGrille()[this.position[0]][this.position[1]] = null;
-                    this.position[1] = nextPositionY;
-                    memoire.add(deplacement);
+                    this.deplacer("y", nextPositionY);
                 } else {
                     Agent agent = (Agent) this.environnement.getGrille()[this.position[0]][nextPositionY];
                     agent.getMessageReceived().addLast("y");
